@@ -72,17 +72,19 @@ class SubArcFace(nn.Module):
 
         if self.with_theta:
             thetas = torch.masked_select(cos * 180 / math.pi,a>0)
-            
+            non_pool_thetas = torch.masked_select(non_pool_cos * 180 / math.pi,(a>0)[:,:,None].expand_as(non_pool_cos)).view(input.size(0),self.K)
             if self.with_weight:
                 return {
                     "logits": logits,
                     "thetas": thetas,
                     "weight": self.weight,
+                    "non_pool_theta": non_pool_thetas,
                 }
             else:
                 return {
                     "logits": logits,
                     "thetas": thetas,
+                    "non_pool_theta": non_pool_thetas,
                 }
         else:
             if self.with_weight:

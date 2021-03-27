@@ -11,12 +11,12 @@ from easydict import EasyDict as edict
 import torch
 import torch.nn as nn
 
-sys.path.append("./")
-from core.utils import AverageMeter
-from core.data import FaceDataset
-import core.models as models
-import core.losses as losses
-from core.utils import (
+sys.path.append("../")
+from utils import AverageMeter
+from data import FaceDataset
+import models as models
+import losses as losses
+from utils import (
     AverageMeter,
     accuracy,
     load_state,
@@ -85,6 +85,7 @@ def drop():
 
     thetas = []
     weight = []
+    non_pooltheta = []
     with torch.no_grad():
         end = time.time()
         for i, input_data in enumerate(drop_loader):
@@ -92,6 +93,7 @@ def drop():
             output = drop_forward(model, input_data)
             thetas.append(output["theta"].cpu().numpy())
             weight.append(output["weight"].cpu().numpy())
+            non_pooltheta.append(output["non_pool_theta"].cpu().numpy())
             # features.append(output.data.cpu().numpy())
             batch_time.update(time.time() - end)
             end = time.time()
@@ -105,7 +107,7 @@ def drop():
 
     thetas = np.concatenate(thetas, axis=0)
     weight = np.concatenate(weight, axis=0)
-    return macs, params, thetas, weight
+    return macs, params, thetas, weight, non_pooltheta
 
 
 if __name__ == "__main__":
