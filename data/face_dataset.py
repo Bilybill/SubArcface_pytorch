@@ -17,6 +17,7 @@ class FaceDataset(Dataset):
         list_file = train_data_info["list"][0]
         meta_file = train_data_info["meta"][0]
         prefix = train_data_info["prefix"][0]
+        self.drop_mode = train_data_info["drop_mode"]
 
         with open(list_file) as f:
             self.img_list = [
@@ -49,6 +50,7 @@ class FaceDataset(Dataset):
             print("img %s is not available, random_id = %d" % (image_path, random_id))
             return self.__getitem__(random_id)
         h, w, _ = img.shape
-        img = self.face_aug(img)
+        if not self.drop_mode:
+            img = self.face_aug(img)
         label = self.meta_list[idx]
         return {"image": img, "label": label}

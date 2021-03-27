@@ -49,6 +49,8 @@ class SubArcFace(nn.Module):
         ew = self.weight / torch.norm(self.weight, 2, 2, keepdim=True)
         cos = torch.matmul(ew,ex.t())
         cos = cos.permute(2,0,1)
+        if self.with_theta:
+            non_pool_cos = torch.clone(cos)
         cos = self.pool(cos).squeeze()
 
         index = torch.where(label!=-1)[0]
@@ -69,7 +71,8 @@ class SubArcFace(nn.Module):
             logits = cos
 
         if self.with_theta:
-            thetas = torch.index_select(cos * 180 / math.pi,a>0)
+            thetas = torch.masked_select(cos * 180 / math.pi,a>0)
+            
             if self.with_weight:
                 return {
                     "logits": logits,

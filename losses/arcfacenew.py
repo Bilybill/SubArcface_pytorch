@@ -63,7 +63,7 @@ class ArcFaceNew(nn.Module):
             logits = cos
 
         if self.with_theta:
-            thetas = torch.index_select(cos * 180 / math.pi,a>0)
+            thetas = torch.masked_select(cos * 180 / math.pi,a>0)
             if self.with_weight:
                 return {
                     "logits": logits,
