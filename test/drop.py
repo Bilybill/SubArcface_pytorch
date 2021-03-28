@@ -107,12 +107,13 @@ def drop():
 
     thetas = np.concatenate(thetas, axis=0)
     weight = np.concatenate(weight, axis=0)
+    non_pooltheta = np.concatenate(non_pooltheta, axis=0)
     return macs, params, thetas, weight, non_pooltheta
 
 
 if __name__ == "__main__":
     prepare_drop(args)
-    macs, params, thetas, weight = extract_feature()
+    macs, params, thetas, weight,non_pool_theta = extract_feature()
     print(macs / 1024 / 1024)
     dirname = "./theta_weight/"
     dump_path = os.path.join(dirname, args.save_path)
@@ -120,6 +121,7 @@ if __name__ == "__main__":
         os.makedirs(dirname)
     np.save("./theta_weight/thetas",thetas)
     np.save("./theta_weight/weight",weight)
+    np.save("./theta_weight/non_pooltheta",non_pooltheta)
     # features.tofile(dump_path)
     # print("finish feature dump!")
 
