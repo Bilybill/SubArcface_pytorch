@@ -214,7 +214,7 @@ class Solver:
             tmp.current_step = self.last_iter + i + 1
             self.lr_scheduler.step(tmp.current_step)
             tmp.current_lr = self.lr_scheduler.get_lr()[0]
-
+            
             output = self.model(tmp.input_var["image"], tmp.input_var["label"])
             tmp.loss = self.smloss(output["logits"], tmp.input_var["label"])
             tmp.top1 = accuracy(

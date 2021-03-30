@@ -32,6 +32,9 @@ class FaceDataset(Dataset):
 
         aug_config = config["augmentation"]
         flip = aug_config.get("flip", False)
+        # if self.drop_mode:
+        #     aug_config["scale_aug"] = 0
+        #     aug_config['trans_aug'] = 0
         if flip:
             aug_config["flip"] = 0.5
         else:
@@ -46,11 +49,21 @@ class FaceDataset(Dataset):
         image_path = self.img_list[idx]
         img = cv2.imread(image_path, cv2.IMREAD_COLOR)
         if (img is None):
-            random_id = random.choice(range(len(self.img_list)))
+            if self.drop_mode:
+                random_id = 44644
+            else:
+                random_id = random.choice(range(len(self.img_list)))
             print("img %s is not available, random_id = %d" % (image_path, random_id))
             return self.__getitem__(random_id)
         h, w, _ = img.shape
         if not self.drop_mode:
             img = self.face_aug(img)
+        #img = self.face_aug(img)
+        else:
+            img = cv2.resize(img, (224, 224))
+            img = img * 3.2 / 255.0 - 1.6
+            img = img.transpose((2, 0, 1))
+            img = torch.from_numpy(img)
+            img = img.float()
         label = self.meta_list[idx]
         return {"image": img, "label": label}

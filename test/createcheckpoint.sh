@@ -1,0 +1,1 @@
+python createnewcheckpoint.py --config-path ../../exp/regnety_400m/config.yaml --model-path ../../result/SubArcFaceResult/checkpoints/ckpt_iter_100000.pth.tar --save-path ../../result/dropdatackpt

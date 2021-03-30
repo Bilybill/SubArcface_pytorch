@@ -33,7 +33,7 @@ class SubArcFace(nn.Module):
         self.pool = nn.MaxPool1d(self.K)
         self.weight = Parameter(torch.Tensor(out_features,self.K, in_features))
         # self.reset_parameters()
-        self.weight.data.normal_(std=fc_std)
+        self.weight.data.normal_(std=fc_std) 
 
         self.thresh = math.cos(math.pi - self.margin)
         self.mm = math.sin(math.pi - self.margin) * self.margin 
@@ -72,7 +72,7 @@ class SubArcFace(nn.Module):
 
         if self.with_theta:
             thetas = torch.masked_select(cos * 180 / math.pi,a>0)
-            non_pool_thetas = torch.masked_select(non_pool_cos * 180 / math.pi,(a>0)[:,:,None].expand_as(non_pool_cos)).view(input.size(0),self.K)
+            non_pool_thetas = torch.masked_select(non_pool_cos.acos_() * 180 / math.pi,(a>0)[:,:,None].expand_as(non_pool_cos)).view(input.size(0),self.K)
             if self.with_weight:
                 return {
                     "logits": logits,

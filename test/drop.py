@@ -23,11 +23,13 @@ from utils import (
     load_last_iter,
     save_state,
     create_logger,
+    Config,
 )
 
 parser = argparse.ArgumentParser(description="Drop non-dominant data")
 parser.add_argument("--prefix", default="", type=str)
 parser.add_argument("--list-file", default="", type=str)
+parser.add_argument("--meta-file",default="",type=str)
 parser.add_argument("--config-path", default="", type=str)
 parser.add_argument("--model-path", default="", type=str)
 parser.add_argument("--save-path", default="", type=str)
@@ -40,7 +42,12 @@ def prepare_drop(args):
 
     C = Config(config_path)
     if C.config["train_data"]["drop_mode"] == False:
+        print("Change mode into drop mode")
         C.config["train_data"]["drop_mode"] = True
+    train_data_info = C.config["train_data"]
+    train_data_info["prefix"][0] = args.prefix
+    train_data_info["meta"][0] = args.meta_file
+    train_data_info["list"][0] = args.list_file
 
     drop_dataset = FaceDataset(C.config)
     drop_dataloader = DataLoader(
@@ -62,37 +69,49 @@ def prepare_drop(args):
     loss_args["base"] = model
     loss_args["weight"] = True
     loss_args["with_theta"] = True
+    loss_args["type"] = "SubArcFace"
     model = losses.loss_entry(config.loss)
+    # for k, v in model.named_parameters():
+    #     print(v.size(),k)
+    # print(set([v for k, v in model.named_parameters()]))
     model.cuda()
     model.eval()
     load_state(model_path,model)
+    
     return model,drop_dataloader
 
 def drop_forward(model,input_data):
-    return model(input_data["image"].cuda(),input_data["label"].cuda())
+    # print(input_data)
+    # raise ValueError("stop here")
+    input_var = dict()
+    for k, v in input_data.items():
+        if not isinstance(v, list):
+            input_var[k] = v.cuda()
+    # print(input_var["image"].size())
+    return model(input_var["image"],input_var["label"])
 
 def drop():
 
-    torch.cuda.set_device(0)
+    torch.cuda.set_device(3)
 
     model, drop_loader = prepare_drop(args)
 
-    input_test = torch.randn(1, 3, 224, 224).cuda()
-    macs, params = profile(model, inputs=(input_test,))
+    # input_test = torch.randn(1, 3, 224, 224).cuda()
+    # macs, params = profile(model, inputs=(input_test,))
 
     batch_time = AverageMeter(10)
     data_time = AverageMeter(10)
 
     thetas = []
-    weight = []
+    # weight = []
     non_pooltheta = []
     with torch.no_grad():
         end = time.time()
         for i, input_data in enumerate(drop_loader):
             data_time.update(time.time() - end)
             output = drop_forward(model, input_data)
-            thetas.append(output["theta"].cpu().numpy())
-            weight.append(output["weight"].cpu().numpy())
+            thetas.append(output["thetas"].cpu().numpy())
+            weight=output["weight"].cpu().numpy()
             non_pooltheta.append(output["non_pool_theta"].cpu().numpy())
             # features.append(output.data.cpu().numpy())
             batch_time.update(time.time() - end)
@@ -106,22 +125,24 @@ def drop():
                 )
 
     thetas = np.concatenate(thetas, axis=0)
-    weight = np.concatenate(weight, axis=0)
+    # weight = np.concatenate(weight, axis=0)
     non_pooltheta = np.concatenate(non_pooltheta, axis=0)
-    return macs, params, thetas, weight, non_pooltheta
+    return thetas, weight, non_pooltheta
 
 
 if __name__ == "__main__":
     prepare_drop(args)
-    macs, params, thetas, weight,non_pool_theta = extract_feature()
-    print(macs / 1024 / 1024)
-    dirname = "./theta_weight/"
+    '''
+    thetas, weight,non_pooltheta = drop()
+    # print(macs / 1024 / 1024)
+    dirname = "./theta_weight_v2/"
     dump_path = os.path.join(dirname, args.save_path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    np.save("./theta_weight/thetas",thetas)
-    np.save("./theta_weight/weight",weight)
-    np.save("./theta_weight/non_pooltheta",non_pooltheta)
+    np.save("./theta_weight_v2/thetas",thetas)
+    np.save("./theta_weight_v2/weight",weight)
+    np.save("./theta_weight_v2/non_pooltheta",non_pooltheta)
+    '''
     # features.tofile(dump_path)
     # print("finish feature dump!")
 
