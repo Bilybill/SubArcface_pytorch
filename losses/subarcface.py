@@ -60,8 +60,8 @@ class SubArcFace(nn.Module):
             a.scatter_(1,label[index,None],self.margin)
             b.scatter_(1,label[index,None],-self.mm)
             mask = (cos>self.thresh)*1
-            logits =  cos.acos_() + a * mask + b * ( 1 - mask )
-            logits = self.scale * (torch.cos(logits))
+            logits =  torch.cos(cos.acos_() + a * mask) + b * ( 1 - mask )
+            logits = self.scale * logits
         else:
             m_hot = torch.zeros_like(cos)
             m_hot.scatter_(1,label[index,None],self.margin)
